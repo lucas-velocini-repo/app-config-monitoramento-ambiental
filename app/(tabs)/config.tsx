@@ -1,4 +1,4 @@
-import { CheckCircle2, Wifi } from "lucide-react-native";
+import { Bluetooth, CheckCircle2 } from "lucide-react-native";
 import {
     StyleSheet,
     Text,
@@ -25,14 +25,14 @@ export default function Config() {
         <Text style={styles.label}>Rota do Servidor</Text>
         <TextInput style={styles.input} placeholder="ex: 192.168.1.50/data" />
 
-        <Text style={styles.label}>SSID Wi-Fi</Text>
+        <Text style={styles.label}>Wi-Fi</Text>
         <TextInput style={styles.input} placeholder="Nome da rede" />
 
         <Text style={styles.label}>Senha</Text>
         <TextInput style={styles.input} secureTextEntry placeholder="******" />
 
         <TouchableOpacity style={styles.button}>
-          <Wifi color="white" size={20} />
+          <Bluetooth color="white" size={20} />
           <Text style={styles.buttonText}>Enviar via Bluetooth</Text>
         </TouchableOpacity>
       </View>

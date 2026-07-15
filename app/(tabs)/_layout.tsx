@@ -20,7 +20,7 @@ export default function Layout() {
       <Tabs.Screen
         name="config"
         options={{
-          title: "Configuração",
+          title: "Configurações",
           tabBarIcon: ({ color }) => <Settings color={color} size={24} />,
         }}
       />
