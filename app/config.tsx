@@ -1,4 +1,5 @@
-import { Bluetooth, CheckCircle2 } from "lucide-react-native";
+import { Link, useLocalSearchParams } from "expo-router";
+import { ArrowLeft, Bluetooth, CheckCircle2 } from "lucide-react-native";
 import {
     StyleSheet,
     Text,
@@ -8,12 +9,22 @@ import {
 } from "react-native";
 
 export default function Config() {
+  const { name } = useLocalSearchParams();
+  const moduleName = typeof name === "string" ? name : "Estação Meteorológica";
+
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <Link href="/" style={styles.backButton} replace>
+          <ArrowLeft color="#0056b3" size={20} />
+        </Link>
+        <Text style={styles.pageTitle}>Configurações</Text>
+      </View>
+
       <View style={styles.statusHeader}>
         <View>
           <Text style={styles.labelHeader}>Módulo</Text>
-          <Text style={styles.valueHeader}>Estação Meteorológica 1</Text>
+          <Text style={styles.valueHeader}>{moduleName}</Text>
         </View>
         <View style={styles.statusBadge}>
           <CheckCircle2 color="#22c55e" size={20} />
@@ -23,13 +34,26 @@ export default function Config() {
 
       <View style={styles.form}>
         <Text style={styles.label}>Rota do Servidor</Text>
-        <TextInput style={styles.input} placeholder="ex: 192.168.1.50/data" />
+        <TextInput
+          style={styles.input}
+          placeholder="ex: 192.168.1.50/data"
+          placeholderTextColor="#94a3b8"
+        />
 
         <Text style={styles.label}>Wi-Fi</Text>
-        <TextInput style={styles.input} placeholder="Nome da rede" />
+        <TextInput
+          style={styles.input}
+          placeholder="Nome da rede"
+          placeholderTextColor="#94a3b8"
+        />
 
         <Text style={styles.label}>Senha</Text>
-        <TextInput style={styles.input} secureTextEntry placeholder="******" />
+        <TextInput
+          style={styles.input}
+          secureTextEntry
+          placeholder="******"
+          placeholderTextColor="#94a3b8"
+        />
 
         <TouchableOpacity style={styles.button}>
           <Bluetooth color="white" size={20} />
@@ -41,7 +65,31 @@ export default function Config() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "#f8fafc" },
+  container: {
+    flex: 1,
+    padding: 20,
+    paddingTop: 35,
+    backgroundColor: "#f8fafc",
+  },
+  header: {
+    position: "relative",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  backButton: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    padding: 8,
+  },
+  backText: { color: "#0056b3", marginLeft: 5, fontWeight: "600" },
+  pageTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#0f172a",
+    textAlign: "center",
+    marginTop: 5,
+  },
   statusHeader: {
     flexDirection: "row",
     justifyContent: "space-between",

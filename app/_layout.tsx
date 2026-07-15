@@ -9,17 +9,14 @@ import "react-native-reanimated";
 
 import { useColorScheme } from "./_hooks/use-color-scheme";
 
-export const unstable_settings = {
-  anchor: "(tabs)",
-};
-
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="config" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="dark" backgroundColor="#ffffff" translucent={false} />
     </ThemeProvider>

@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import { AlertCircle, Bluetooth } from "lucide-react-native";
 import { useState } from "react";
 import {
@@ -9,11 +10,16 @@ import {
 } from "react-native";
 
 export default function Home() {
-  const [devices, setDevices] = useState([
+  const router = useRouter();
+  const [devices] = useState([
     { id: 1, name: "Estação Meteorológica 1" },
     { id: 2, name: "Estação Meteorológica 2" },
     { id: 3, name: "Estação Meteorológica 3" },
   ]);
+
+  function handleSelectDevice(name: string) {
+    router.push({ pathname: "/config", params: { name } });
+  }
 
   return (
     <View style={styles.container}>
@@ -25,7 +31,10 @@ export default function Home() {
           data={devices}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
-            <TouchableOpacity style={styles.card}>
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => handleSelectDevice(item.name)}
+            >
               <Bluetooth color="#0056b3" size={24} />
               <Text style={styles.cardText}>{item.name}</Text>
             </TouchableOpacity>
@@ -46,7 +55,12 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "#f8fafc" },
+  container: {
+    flex: 1,
+    padding: 20,
+    paddingTop: 50,
+    backgroundColor: "#f8fafc",
+  },
   title: { fontSize: 32, fontWeight: "bold", color: "#0056b3" },
   subtitle: { fontSize: 16, color: "#64748b", marginBottom: 20 },
   card: {
