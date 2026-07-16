@@ -17,10 +17,6 @@ export default function Home() {
     { id: 2, name: "Estação Meteorológica 2" },
     { id: 3, name: "Estação Meteorológica 3" },
     { id: 4, name: "Estação Meteorológica 4" },
-    { id: 5, name: "Estação Meteorológica 5" },
-    { id: 6, name: "Estação Meteorológica 6" },
-    { id: 7, name: "Estação Meteorológica 7" },
-    { id: 8, name: "Estação Meteorológica 8" },
   ]);
 
   function handleSelectDevice(name: string) {
@@ -73,19 +69,20 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8fafc",
   },
   logo: {
-    width: 60,
-    height: 60,
+    width: 40,
+    height: 40,
     position: "absolute",
-    top: 45,
+    top: 55,
     right: 20,
   },
   title: { fontSize: 32, fontWeight: "bold", color: "#0056b3" },
   subtitle: { fontSize: 16, color: "#64748b", marginBottom: 20 },
   card: {
     backgroundColor: "#0057b3de",
+    height: 70,
     padding: 15,
     borderRadius: 12,
-    marginBottom: 10,
+    marginBottom: 8,
     flexDirection: "row",
     alignItems: "center",
     elevation: 0,
