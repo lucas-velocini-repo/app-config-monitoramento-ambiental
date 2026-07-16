@@ -24,9 +24,8 @@
         "android.permission.BLUETOOTH",
         "android.permission.BLUETOOTH_ADMIN",
         "android.permission.BLUETOOTH_CONNECT",
-        "android.permission.BLUETOOTH",
-        "android.permission.BLUETOOTH_ADMIN",
-        "android.permission.BLUETOOTH_CONNECT"
+        "android.permission.BLUETOOTH_SCAN",
+        "android.permission.ACCESS_FINE_LOCATION"
       ],
       "package": "com.anonymous.meuappmobile"
     },
@@ -48,7 +47,14 @@
           }
         }
       ],
-      "react-native-ble-plx"
+      [
+        "react-native-ble-plx",
+        {
+          "isBackgroundEnabled": false,
+          "modes": ["peripheral", "central"],
+          "bluetoothPermission": "Permitir que $(PRODUCT_NAME) acesse o bluetooth."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
