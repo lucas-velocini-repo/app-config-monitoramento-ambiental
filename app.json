@@ -50,7 +50,7 @@
       [
         "react-native-ble-plx",
         {
-          "isBackgroundEnabled": false,
+          "isBackgroundEnabled": true,
           "modes": ["peripheral", "central"],
           "bluetoothPermission": "Permitir que $(PRODUCT_NAME) acesse o bluetooth."
         }
