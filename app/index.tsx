@@ -3,6 +3,7 @@ import { AlertCircle, Bluetooth } from "lucide-react-native";
 import { useState } from "react";
 import {
     FlatList,
+    Image,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -15,6 +16,11 @@ export default function Home() {
     { id: 1, name: "Estação Meteorológica 1" },
     { id: 2, name: "Estação Meteorológica 2" },
     { id: 3, name: "Estação Meteorológica 3" },
+    { id: 4, name: "Estação Meteorológica 4" },
+    { id: 5, name: "Estação Meteorológica 5" },
+    { id: 6, name: "Estação Meteorológica 6" },
+    { id: 7, name: "Estação Meteorológica 7" },
+    { id: 8, name: "Estação Meteorológica 8" },
   ]);
 
   function handleSelectDevice(name: string) {
@@ -23,6 +29,11 @@ export default function Home() {
 
   return (
     <View style={styles.container}>
+      <Image
+        source={require("../assets/images/logo-2-transp.png")}
+        style={styles.logo}
+        resizeMode="contain"
+      />
       <Text style={styles.title}>Olá!</Text>
       <Text style={styles.subtitle}>Conecte-se a um módulo disponível:</Text>
 
@@ -35,7 +46,7 @@ export default function Home() {
               style={styles.card}
               onPress={() => handleSelectDevice(item.name)}
             >
-              <Bluetooth color="#0056b3" size={24} />
+              <Bluetooth color="#ffffff" size={24} />
               <Text style={styles.cardText}>{item.name}</Text>
             </TouchableOpacity>
           )}
@@ -61,18 +72,30 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     backgroundColor: "#f8fafc",
   },
+  logo: {
+    width: 60,
+    height: 60,
+    position: "absolute",
+    top: 45,
+    right: 20,
+  },
   title: { fontSize: 32, fontWeight: "bold", color: "#0056b3" },
   subtitle: { fontSize: 16, color: "#64748b", marginBottom: 20 },
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: "#0057b3de",
     padding: 15,
     borderRadius: 12,
     marginBottom: 10,
     flexDirection: "row",
     alignItems: "center",
-    elevation: 2,
+    elevation: 0,
   },
-  cardText: { marginLeft: 15, fontSize: 16, fontWeight: "600" },
+  cardText: {
+    marginLeft: 15,
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#ffffff",
+  },
   emptyState: { alignItems: "center", marginTop: 50 },
   emptyText: { fontSize: 18, fontWeight: "600", marginTop: 10 },
   checklist: {
