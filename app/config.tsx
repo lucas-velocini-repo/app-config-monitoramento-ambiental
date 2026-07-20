@@ -13,6 +13,7 @@ import {
   View,
 } from "react-native";
 import BLEService from "./services/ble";
+import { BLEMessage } from "./services/ble-types";
 
 export default function Config() {
   const { name } = useLocalSearchParams();
@@ -20,32 +21,65 @@ export default function Config() {
   const [route, setRoute] = useState("");
   const [ssid, setSsid] = useState("");
   const [password, setPassword] = useState("");
+  const [sending, setSending] = useState(false);
   const [message, setMessage] = useState("");
-  const [wifiName, setWifiName] = useState("Não conectado");
+  const [wifiName, setWifiName] = useState("----");
+  const [ip, setIp] = useState("----");
+  const [bluetoothConnected, setBluetoothConnected] = useState(false);
   const [messageType, setMessageType] = useState<"success" | "error" | "">("");
-  const [connected, setConnected] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const translateAnim = useRef(new Animated.Value(10)).current;
 
   useEffect(() => {
-    BLEService.setConnectionCallback(
-      (status) => {
-          setConnected(status);
-      }
-    );
-
     BLEService.setMessageCallback(
-      (msg)=>{
-          console.log(msg);
-      }
-    );
+    (message)=>{
+        const data = JSON.parse(message) as BLEMessage;
+        switch(data.type){
+          case "status":
+            setSending(false);
+            setBluetoothConnected(
+              data.bluetooth
+            );
 
-    BLEService.send(
-      JSON.stringify({
-          command: "get_status"
-      })
-    );
+            if(data.wifiConnected){
+              setWifiName(data.ssid);
+              setIp(data.ip);
+            }else{
+              setWifiName("----");
+              setIp("----");
+              }
+            break;
+
+          case "configure_result":
+            setSending(false);
+            if(data.status === "ok"){
+                showMessage(
+                    "success",
+                    "Configuração enviada com sucesso!"
+                );
+            }else{
+                showMessage(
+                    "error",
+                    data.message ??
+                    "Erro ao configurar o módulo."
+                );
+                setWifiName("----");
+                setIp("----");
+            }
+            break;
+        }
+    });
+
+    BLEService.setConnectionCallback((connected) => {
+        if (!connected) {
+            setBluetoothConnected(false);
+            setWifiName("----");
+            setIp("----");
+        }
+    });
+
+    BLEService.getStatus();
 
     return () => {
       if (timeoutRef.current) {
@@ -124,7 +158,7 @@ export default function Config() {
     }, 3000);
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     Keyboard.dismiss();
 
     if (!route.trim() || !ssid.trim() || !password.trim()) {
@@ -137,7 +171,12 @@ export default function Config() {
       return;
     }
 
-    showMessage("success", "Dados enviados com sucesso!");
+    setSending(true);
+    await BLEService.configureWifi(
+        ssid,
+        password,
+        route
+    );
   }
 
   return (
@@ -166,15 +205,22 @@ export default function Config() {
         </View>
       </View>
 
-      <View style={styles.statusBadge}>
-        <CheckCircle2
-          color={connected ? "#22c55e" : "#ef4444"}
-          size={20}
-        />
+      <View>
+        <View style={styles.statusBadge}>
+          <CheckCircle2
+            color={bluetoothConnected ? "#22c55e" : "#ef4444"}
+            size={20}
+          />
 
-        <Text style={{ marginLeft: 5 }}>
-          {connected ? "Conectado" : "Desconectado"}
-        </Text>
+          <Text style={{ marginLeft: 5 }}>
+            {bluetoothConnected ? "Conectado" : "Desconectado"}
+          </Text>
+
+        </View>
+        <View style={{ marginTop: 12 }}>
+          <Text style={styles.labelHeader}>Ip da rede</Text>
+          <Text style={styles.valueHeader}>{ip}</Text>
+        </View>
       </View>
 
     </View>
@@ -203,14 +249,16 @@ export default function Config() {
           style={styles.input}
           value={password}
           onChangeText={setPassword}
-          secureTextEntry
+          secureTextEntry={true}
+          autoCorrect={false}
+          autoCapitalize="none"
           placeholder="******"
           placeholderTextColor="#94a3b8"
         />
 
-        <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+        <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={sending}>
           <Bluetooth color="white" size={20} />
-          <Text style={styles.buttonText}>Enviar via Bluetooth</Text>
+          <Text style={styles.buttonText}>{ sending ? "Enviando..." : "Enviar via Bluetooth" }</Text>
         </TouchableOpacity>
 
         {message.length > 0 ? (

@@ -7,7 +7,6 @@ class BLEService {
 
     private connectedDevice: Device | null = null;
     private scanning = false;
-    private isConnected = false;
     private messageCallback: ((message: string)=>void) | null = null;
     private connectionCallback: ((connected: boolean) => void) | null = null;
 
@@ -89,12 +88,17 @@ class BLEService {
             await this.manager.connectToDevice(deviceId);
 
         await device.discoverAllServicesAndCharacteristics();
+        await device.requestMTU(247);
 
         await device.monitorCharacteristicForService(
             BLE_UUID.SERVICE,
             BLE_UUID.TX,
             (error, characteristic) => {
                 if(error){
+                    if(error.errorCode === 201){
+                        return;
+                    }
+
                     console.error(error);
                     return;
                 }
@@ -117,21 +121,17 @@ class BLEService {
             this.connectionCallback?.(false);
         });
 
-        this.isConnected = true;
         this.connectionCallback?.(true);
 
         return device;
     }
 
     async disconnect() {
-
         if(this.connectedDevice) {
-
-            await this.manager.cancelDeviceConnection(
-            this.connectedDevice.id
-            );
-
+            const id = this.connectedDevice.id;
             this.connectedDevice = null;
+            this.connectionCallback?.(false);
+            await this.manager.cancelDeviceConnection(id);
         }
     }
 
@@ -140,7 +140,8 @@ class BLEService {
     )
     {
         this.connectionCallback = callback;
-        callback(this.isConnected);
+        callback(this.connectedDevice !== null);
+        
     }
 
     setMessageCallback(
@@ -152,6 +153,7 @@ class BLEService {
 
     async send(message: string)
     {
+        console.log("Sending message:", message);
         if(!this.connectedDevice){
             return;
         }
@@ -162,6 +164,29 @@ class BLEService {
             BLE_UUID.SERVICE,
             BLE_UUID.RX,
             encoded
+        );
+    }
+
+    async getStatus(){
+        await this.send(
+            JSON.stringify({
+                command:"get_status"
+            })
+        );
+    }
+
+    async configureWifi(
+        ssid: string,
+        password: string,
+        server: string
+    ) {
+        await this.send(
+            JSON.stringify({
+                command: "configure_wifi",
+                ssid,
+                password,
+                server
+            })
         );
     }
 }
