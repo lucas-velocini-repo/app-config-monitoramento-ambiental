@@ -1,26 +1,82 @@
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { AlertCircle, Bluetooth } from "lucide-react-native";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
-    FlatList,
-    Image,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import BLEService from "./services/ble";
 
 export default function Home() {
   const router = useRouter();
-  const [devices] = useState([
-    { id: 1, name: "Estação Meteorológica 1" },
-    { id: 2, name: "Estação Meteorológica 2" },
-    { id: 3, name: "Estação Meteorológica 3" },
-    { id: 4, name: "Estação Meteorológica 4" },
-  ]);
+  const [devices, setDevices] = useState<
+    { id: string; name: string }[]
+    >([]);
 
-  function handleSelectDevice(name: string) {
-    router.push({ pathname: "/config", params: { name } });
+  useFocusEffect(
+    useCallback(() => {
+        async function initializeBLE() {
+            const ok =
+                await BLEService.requestPermissions();
+
+            if(!ok){
+                return;
+            }
+            BLEService.startScan((device)=>{
+
+                setDevices((old)=>{
+                    const exists =
+                        old.find(
+                            d => d.id === device.id
+                        );
+                    if(exists){
+                        return old;
+                    }
+                    return [
+                        ...old,
+                        device
+                    ];
+                });
+            });
+        }
+        setDevices([]);
+        initializeBLE();
+
+        return () => {
+            BLEService.stopScan();
+        };
+    }, [])
+  );
+
+  async function handleSelectDevice(
+    device: {id:string; name:string}
+  )
+  {
+    try {
+
+      BLEService.stopScan();
+      await BLEService.connect(device.id);
+
+      router.push({
+        pathname:"/config",
+        params:{
+          id:device.id,
+          name:device.name
+        }
+      });
+
+    } catch(error){
+
+      console.log(
+        "Erro ao conectar:",
+        error
+      );
+
+    }
   }
 
   return (
@@ -40,7 +96,7 @@ export default function Home() {
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.card}
-              onPress={() => handleSelectDevice(item.name)}
+              onPress={() => handleSelectDevice(item)}
             >
               <Bluetooth color="#ffffff" size={24} />
               <Text style={styles.cardText}>{item.name}</Text>

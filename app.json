@@ -51,7 +51,10 @@
         "react-native-ble-plx",
         {
           "isBackgroundEnabled": true,
-          "modes": ["peripheral", "central"],
+          "modes": [
+            "peripheral",
+            "central"
+          ],
           "bluetoothPermission": "Permitir que $(PRODUCT_NAME) acesse o bluetooth."
         }
       ]
@@ -59,6 +62,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "0acc96b7-149f-48fa-bf21-fe32dfda841c"
+      }
     }
   }
 }

@@ -2,16 +2,17 @@ import { Link, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, Bluetooth, CheckCircle2 } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    Easing,
-    Image,
-    Keyboard,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Animated,
+  Easing,
+  Image,
+  Keyboard,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import BLEService from "./services/ble";
 
 export default function Config() {
   const { name } = useLocalSearchParams();
@@ -20,16 +21,37 @@ export default function Config() {
   const [ssid, setSsid] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [wifiName, setWifiName] = useState("Não conectado");
   const [messageType, setMessageType] = useState<"success" | "error" | "">("");
+  const [connected, setConnected] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const translateAnim = useRef(new Animated.Value(10)).current;
 
   useEffect(() => {
+    BLEService.setConnectionCallback(
+      (status) => {
+          setConnected(status);
+      }
+    );
+
+    BLEService.setMessageCallback(
+      (msg)=>{
+          console.log(msg);
+      }
+    );
+
+    BLEService.send(
+      JSON.stringify({
+          command: "get_status"
+      })
+    );
+
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
+      BLEService.disconnect();
     };
   }, []);
 
@@ -133,15 +155,29 @@ export default function Config() {
       </View>
 
       <View style={styles.statusHeader}>
-        <View>
-          <Text style={styles.labelHeader}>Módulo</Text>
-          <Text style={styles.valueHeader}>{moduleName}</Text>
-        </View>
-        <View style={styles.statusBadge}>
-          <CheckCircle2 color="#22c55e" size={20} />
-          <Text style={{ marginLeft: 5 }}>Conectado</Text>
+
+      <View>
+        <Text style={styles.labelHeader}>Módulo</Text>
+        <Text style={styles.valueHeader}>{moduleName}</Text>
+
+        <View style={{ marginTop: 12 }}>
+          <Text style={styles.labelHeader}>Wi-Fi</Text>
+          <Text style={styles.valueHeader}>{wifiName}</Text>
         </View>
       </View>
+
+      <View style={styles.statusBadge}>
+        <CheckCircle2
+          color={connected ? "#22c55e" : "#ef4444"}
+          size={20}
+        />
+
+        <Text style={{ marginLeft: 5 }}>
+          {connected ? "Conectado" : "Desconectado"}
+        </Text>
+      </View>
+
+    </View>
 
       <View style={styles.form}>
         <Text style={styles.label}>Rota do Servidor</Text>
