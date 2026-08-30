@@ -20,29 +20,37 @@ export default function Home() {
   useFocusEffect(
     useCallback(() => {
         async function initializeBLE() {
-            const ok =
-                await BLEService.requestPermissions();
 
-            if(!ok){
-                return;
-            }
-            BLEService.startScan((device)=>{
+  const ok =
+    await BLEService.requestPermissions();
 
-                setDevices((old)=>{
-                    const exists =
-                        old.find(
-                            d => d.id === device.id
-                        );
-                    if(exists){
-                        return old;
-                    }
-                    return [
-                        ...old,
-                        device
-                    ];
-                });
+  if (!ok) {
+    return;
+  }
+
+  await BLEService.startScan(
+          (device) => {
+
+            setDevices((old) => {
+
+              const exists =
+                old.find(
+                  d => d.id === device.id
+                );
+
+              if (exists) {
+                return old;
+              }
+
+              return [
+                ...old,
+                device
+              ];
             });
-        }
+          }
+        );
+      }
+      
         setDevices([]);
         initializeBLE();
 
