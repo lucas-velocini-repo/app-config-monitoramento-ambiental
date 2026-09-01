@@ -4,6 +4,8 @@ export interface StatusMessage {
 
     bluetooth: boolean;
 
+    hardwareId: string;
+
     wifiConnected: boolean;
 
     ssid: string;

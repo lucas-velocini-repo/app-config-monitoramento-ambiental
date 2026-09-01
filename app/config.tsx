@@ -22,6 +22,7 @@ export default function Config() {
   const [ssid, setSsid] = useState("");
   const [password, setPassword] = useState("");
   const [sending, setSending] = useState(false);
+  const [hardwareId, setHardwareId] = useState("----");
   const [message, setMessage] = useState("");
   const [wifiName, setWifiName] = useState("----");
   const [ip, setIp] = useState("----");
@@ -41,6 +42,8 @@ export default function Config() {
             setBluetoothConnected(
               data.bluetooth
             );
+
+            setHardwareId(data.hardwareId);
 
             if(data.wifiConnected){
               setWifiName(data.ssid);
@@ -220,6 +223,16 @@ export default function Config() {
         <View style={{ marginTop: 12 }}>
           <Text style={styles.labelHeader}>Ip da rede</Text>
           <Text style={styles.valueHeader}>{ip}</Text>
+        </View>
+
+        <View style={{ marginTop: 12 }}>
+          <Text style={styles.labelHeader}>
+            Hardware ID
+          </Text>
+
+          <Text style={styles.valueHeader}>
+            {hardwareId}
+          </Text>
         </View>
       </View>
 
