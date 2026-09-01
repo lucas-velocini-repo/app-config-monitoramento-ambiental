@@ -14,6 +14,10 @@ import {
 } from "react-native";
 import BLEService from "./services/ble";
 import { BLEMessage } from "./services/ble-types";
+import {
+  registerDevice
+} from "./services/device-api";
+
 
 export default function Config() {
   const { name } = useLocalSearchParams();
@@ -24,6 +28,8 @@ export default function Config() {
   const [sending, setSending] = useState(false);
   const [hardwareId, setHardwareId] = useState("----");
   const [message, setMessage] = useState("");
+  const [deviceId, setDeviceId] = useState("");
+  const [stationName, setStationName] = useState("");
   const [wifiName, setWifiName] = useState("----");
   const [ip, setIp] = useState("----");
   const [bluetoothConnected, setBluetoothConnected] = useState(false);
@@ -45,6 +51,8 @@ export default function Config() {
 
             setHardwareId(data.hardwareId);
 
+            setDeviceId(data.deviceId ?? "");
+
             if(data.wifiConnected){
               setWifiName(data.ssid);
               setIp(data.ip);
@@ -52,6 +60,32 @@ export default function Config() {
               setWifiName("----");
               setIp("----");
               }
+            break;
+
+          case "identity_saved":
+
+            if(
+                data.status === "ok"
+                && data.deviceId
+            )
+            {
+                setDeviceId(
+                    data.deviceId
+                );
+
+                console.log(
+                    "Identidade salva:",
+                    data.deviceId
+                );
+            }
+            else
+            {
+                console.error(
+                    "Erro ao salvar identidade:",
+                    data.message
+                );
+            }
+
             break;
 
           case "configure_result":
@@ -182,6 +216,60 @@ export default function Config() {
     );
   }
 
+  async function provisionStation()
+  {
+      if(
+          !hardwareId
+          || hardwareId === "----"
+      )
+      {
+          console.error(
+              "Hardware ID não disponível"
+          );
+
+          return;
+      }
+
+      if(!stationName.trim())
+      {
+          console.error(
+              "Informe o nome da estação"
+          );
+
+          return;
+      }
+
+      try
+      {
+          console.log(
+              "Registrando estação..."
+          );
+
+          const registered =
+              await registerDevice(
+                  server,
+                  hardwareId,
+                  stationName.trim()
+              );
+
+          console.log(
+              "Dispositivo registrado:",
+              registered
+          );
+
+          await BLEService.saveIdentity(
+              registered.device_id
+          );
+      }
+      catch(error)
+      {
+          console.error(
+              "Erro no provisionamento:",
+              error
+          );
+      }
+  }
+
   return (
     <View style={styles.container}>
       <Image
@@ -239,6 +327,17 @@ export default function Config() {
     </View>
 
       <View style={styles.form}>
+        <Text style={styles.labelHeader}>
+            Nome da estação
+        </Text>
+
+        <TextInput
+            value={stationName}
+            onChangeText={setStationName}
+            placeholder="Ex.: Sala"
+            autoCapitalize="words"
+        />
+
         <Text style={styles.label}>Rota do Servidor</Text>
         <TextInput
           style={styles.input}

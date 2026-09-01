@@ -2,9 +2,11 @@ export interface StatusMessage {
 
     type: "status";
 
-    bluetooth: boolean;
-
     hardwareId: string;
+
+    deviceId: string;
+
+    bluetooth: boolean;
 
     wifiConnected: boolean;
 
@@ -13,6 +15,7 @@ export interface StatusMessage {
     ip: string;
 
 }
+
 
 export interface ConfigureResultMessage {
 
@@ -24,6 +27,21 @@ export interface ConfigureResultMessage {
 
 }
 
+
+export interface IdentitySavedMessage {
+
+    type: "identity_saved";
+
+    status: "ok" | "error";
+
+    deviceId?: string;
+
+    message?: string;
+
+}
+
+
 export type BLEMessage =
     | StatusMessage
-    | ConfigureResultMessage;
+    | ConfigureResultMessage
+    | IdentitySavedMessage;

@@ -1,10 +1,10 @@
 import { PermissionsAndroid, Platform } from "react-native";
 
 import {
-    BleManager,
-    Device,
-    State,
-    Subscription,
+  BleManager,
+  Device,
+  State,
+  Subscription,
 } from "react-native-ble-plx";
 
 import { BLE_UUID } from "./bleUUID";
@@ -58,6 +58,20 @@ class BLEService {
       result["android.permission.BLUETOOTH_CONNECT"] ===
         PermissionsAndroid.RESULTS.GRANTED
     );
+  }
+
+  async saveIdentity(
+      deviceId: string
+  ): Promise<void> {
+
+      const message = {
+          command: "save_identity",
+          deviceId: deviceId,
+      };
+
+      await this.send(
+          JSON.stringify(message)
+      );
   }
 
   async waitForBluetoothPoweredOn(): Promise<void> {
