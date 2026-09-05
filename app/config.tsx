@@ -223,8 +223,9 @@ export default function Config() {
           || hardwareId === "----"
       )
       {
-          console.error(
-              "Hardware ID não disponível"
+          showMessage(
+              "error",
+              "Hardware ID não disponível."
           );
 
           return;
@@ -232,8 +233,28 @@ export default function Config() {
 
       if(!stationName.trim())
       {
-          console.error(
-              "Informe o nome da estação"
+          showMessage(
+              "error",
+              "Informe o nome da estação."
+          );
+          return;
+      }
+
+      if(!route.trim())
+      {
+          showMessage(
+              "error",
+              "Informe a rota do servidor."
+          );
+
+          return;
+      }
+
+      if(!validateRoute(route))
+      {
+          showMessage(
+              "error",
+              "Rota inválida. Informe uma URL válida."
           );
 
           return;
@@ -247,7 +268,7 @@ export default function Config() {
 
           const registered =
               await registerDevice(
-                  server,
+                  route,
                   hardwareId,
                   stationName.trim()
               );
@@ -266,6 +287,11 @@ export default function Config() {
           console.error(
               "Erro no provisionamento:",
               error
+          );
+
+          showMessage(
+              "error",
+              "Não foi possível provisionar a estação."
           );
       }
   }
@@ -294,6 +320,16 @@ export default function Config() {
           <Text style={styles.labelHeader}>Wi-Fi</Text>
           <Text style={styles.valueHeader}>{wifiName}</Text>
         </View>
+
+        <View style={{ marginTop: 12 }}>
+          <Text style={styles.labelHeader}>
+              Device ID
+          </Text>
+
+          <Text style={styles.valueHeader}>
+              {deviceId || "Não provisionado"}
+          </Text>
+      </View>
       </View>
 
       <View>
@@ -323,7 +359,6 @@ export default function Config() {
           </Text>
         </View>
       </View>
-
     </View>
 
       <View style={styles.form}>
@@ -332,9 +367,10 @@ export default function Config() {
         </Text>
 
         <TextInput
+            style={styles.input}
             value={stationName}
             onChangeText={setStationName}
-            placeholder="Ex.: Sala"
+            placeholder="Ex.: Minha Estação"
             autoCapitalize="words"
         />
 
@@ -346,6 +382,15 @@ export default function Config() {
           placeholder="ex: 192.168.1.50/data"
           placeholderTextColor="#94a3b8"
         />
+
+        <TouchableOpacity
+            style={styles.button}
+            onPress={provisionStation}
+        >
+            <Text style={styles.buttonText}>
+                Provisionar estação
+            </Text>
+        </TouchableOpacity>
 
         <Text style={styles.label}>Wi-Fi</Text>
         <TextInput
