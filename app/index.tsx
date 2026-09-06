@@ -70,7 +70,7 @@ export default function Home() {
       await BLEService.connect(device.id);
 
       router.push({
-        pathname:"/config",
+        pathname:"/station",
         params:{
           id:device.id,
           name:device.name

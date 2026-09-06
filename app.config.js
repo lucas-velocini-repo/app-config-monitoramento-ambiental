@@ -9,11 +9,11 @@ export default {
 
     slug: "app-config-it",
 
-    version: "1.0.0",
+    version: "1.0.1",
 
     orientation: "portrait",
 
-    icon: "./assets/images/logo-2.jpg",
+    icon: "./assets/images/logo-7.png",
 
     scheme: "meuappmobile",
 
@@ -29,11 +29,11 @@ export default {
       adaptiveIcon: {
         backgroundColor: "#E6F4FE",
         foregroundImage:
-          "./assets/images/logo-2.jpg",
+          "./assets/images/logo-7.png",
         backgroundImage:
-          "./assets/images/logo-2.jpg",
+          "./assets/images/logo-7.png",
         monochromeImage:
-          "./assets/images/logo-2.jpg",
+          "./assets/images/logo-7.png",
       },
 
       edgeToEdgeEnabled: true,
@@ -55,7 +55,7 @@ export default {
 
     web: {
       output: "static",
-      favicon: "./assets/images/logo-2.jpg",
+      favicon: "./assets/images/logo-7.png",
     },
 
     plugins: [
@@ -65,7 +65,7 @@ export default {
         "expo-splash-screen",
         {
           image:
-            "./assets/images/splash-icon.png",
+            "./assets/images/logo-7.png",
           imageWidth: 200,
           resizeMode: "contain",
           backgroundColor: "#ffffff",

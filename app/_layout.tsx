@@ -15,8 +15,25 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="config" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="index"
+            options={{ headerShown: false }}
+          />
+
+          <Stack.Screen
+            name="config"
+            options={{ headerShown: false }}
+          />
+
+          <Stack.Screen
+            name="station"
+            options={{ headerShown: false }}
+          />
+
+          <Stack.Screen
+            name="wifi"
+            options={{ headerShown: false }}
+          />        
       </Stack>
       <StatusBar style="dark" backgroundColor="#ffffff" translucent={false} />
     </ThemeProvider>

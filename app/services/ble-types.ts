@@ -14,6 +14,8 @@ export interface StatusMessage {
 
     ip: string;
 
+    apiTokenConfigured: boolean;
+
 }
 
 
@@ -40,8 +42,18 @@ export interface IdentitySavedMessage {
 
 }
 
+export interface ServerSavedMessage {
+
+  type: "server_saved";
+
+  status: "ok" | "error";
+
+  message?: string;
+
+}
 
 export type BLEMessage =
     | StatusMessage
     | ConfigureResultMessage
-    | IdentitySavedMessage;
+    | IdentitySavedMessage
+    | ServerSavedMessage;

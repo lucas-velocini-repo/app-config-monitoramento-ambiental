@@ -17,12 +17,12 @@
     "preview": {
       "distribution": "internal",
 
-      "env": {
-        "APP_VARIANT": "preview"
-      },
-
       "android": {
         "buildType": "apk"
+      },
+
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "http://192.168.15.2:8000"
       }
     },
 

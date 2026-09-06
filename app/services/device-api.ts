@@ -1,24 +1,20 @@
+import { API_CONFIG } from "../config/api";
+
 export interface RegisterDeviceResponse {
     device_id: string;
     hardware_id: string;
     name: string;
+    api_token: string | null;
 }
 
 
 export async function registerDevice(
-    serverUrl: string,
     hardwareId: string,
     name: string
 ): Promise<RegisterDeviceResponse> {
 
-    const apiBaseUrl =
-        serverUrl.replace(
-            /\/measurements\/?$/,
-            ""
-        );
-
     const response = await fetch(
-        `${apiBaseUrl}/devices/register`,
+        `${API_CONFIG.baseUrl}/devices/register`,
         {
             method: "POST",
 
@@ -34,8 +30,7 @@ export async function registerDevice(
         }
     );
 
-    if(!response.ok)
-    {
+    if (!response.ok) {
         throw new Error(
             `Erro ao registrar estação: ${response.status}`
         );

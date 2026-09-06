@@ -61,17 +61,31 @@ class BLEService {
   }
 
   async saveIdentity(
-      deviceId: string
+      deviceId: string,
+      apiToken: string
   ): Promise<void> {
 
       const message = {
           command: "save_identity",
           deviceId: deviceId,
+          apiToken: apiToken,
       };
 
       await this.send(
           JSON.stringify(message)
       );
+  }
+
+  async saveServer(
+    server: string
+  ): Promise<void> {
+
+    await this.send(
+      JSON.stringify({
+        command: "save_server",
+        server: server,
+      })
+    );
   }
 
   async waitForBluetoothPoweredOn(): Promise<void> {
@@ -229,19 +243,27 @@ class BLEService {
 
   async disconnect() {
 
-    if (this.connectedDevice) {
+    if (!this.connectedDevice) {
+      this.connectionCallback?.(false);
+      return;
+    }
 
-      const id =
-        this.connectedDevice.id;
+    const id =
+      this.connectedDevice.id;
+
+    try {
+
+      await this.manager
+        .cancelDeviceConnection(id);
+
+    }
+    finally {
 
       this.connectedDevice = null;
 
       this.connectionCallback?.(
         false
       );
-
-      await this.manager
-        .cancelDeviceConnection(id);
     }
   }
 
