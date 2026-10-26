@@ -9,7 +9,7 @@ export default {
 
     slug: "app-config-it",
 
-    version: "1.0.1",
+    version: "1.1.0",
 
     orientation: "portrait",
 
@@ -60,6 +60,7 @@ export default {
 
     plugins: [
       "expo-router",
+      "expo-secure-store",
 
       [
         "expo-splash-screen",

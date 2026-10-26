@@ -1,6 +1,6 @@
 import { Link, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, Bluetooth, CheckCircle2 } from "lucide-react-native";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
   Easing,
@@ -12,11 +12,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import BLEService from "./services/ble";
-import { BLEMessage } from "./services/ble-types";
+import BLEService from "../src/services/ble";
+import { BLEMessage } from "../src/services/ble-types";
 import {
   registerDevice
-} from "./services/device-api";
+} from "../src/services/device-api";
 
 
 export default function Config() {
@@ -37,6 +37,51 @@ export default function Config() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const translateAnim = useRef(new Animated.Value(10)).current;
+
+  const showMessage = useCallback((type: "success" | "error", text: string) => {
+    setMessageType(type);
+    setMessage(text);
+    translateAnim.setValue(10);
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 350,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateAnim, {
+        toValue: 0,
+        duration: 350,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 250,
+          easing: Easing.in(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateAnim, {
+          toValue: 10,
+          duration: 250,
+          easing: Easing.in(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setMessage("");
+        setMessageType("");
+      });
+    }, 3000);
+  }, [fadeAnim, translateAnim]);
+
 
   useEffect(() => {
     BLEService.setMessageCallback(
@@ -116,15 +161,15 @@ export default function Config() {
         }
     });
 
-    BLEService.getStatus();
+    void BLEService.getStatus().catch(e => showMessage("error", e instanceof Error ? e.message : "Não foi possível consultar a estação."));
 
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
-      BLEService.disconnect();
+      void BLEService.disconnect().catch(() => {});
     };
-  }, []);
+  }, [showMessage]);
 
   function validateRoute(value: string) {
     const trimmed = value.trim();
@@ -151,49 +196,6 @@ export default function Config() {
     }
   }
 
-  function showMessage(type: "success" | "error", text: string) {
-    setMessageType(type);
-    setMessage(text);
-    translateAnim.setValue(10);
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 350,
-        easing: Easing.out(Easing.ease),
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateAnim, {
-        toValue: 0,
-        duration: 350,
-        easing: Easing.out(Easing.ease),
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-
-    timeoutRef.current = setTimeout(() => {
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 250,
-          easing: Easing.in(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(translateAnim, {
-          toValue: 10,
-          duration: 250,
-          easing: Easing.in(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        setMessage("");
-        setMessageType("");
-      });
-    }, 3000);
-  }
 
   async function handleSubmit() {
     Keyboard.dismiss();
@@ -209,11 +211,12 @@ export default function Config() {
     }
 
     setSending(true);
-    await BLEService.configureWifi(
-        ssid,
-        password,
-        route
-    );
+    try {
+      await BLEService.configureWifi(ssid, password, route);
+    } catch (e) {
+      setSending(false);
+      showMessage("error", e instanceof Error ? e.message : "Não foi possível configurar a estação.");
+    }
   }
 
   async function provisionStation()
@@ -268,18 +271,14 @@ export default function Config() {
 
           const registered =
               await registerDevice(
-                  route,
                   hardwareId,
                   stationName.trim()
               );
 
-          console.log(
-              "Dispositivo registrado:",
-              registered
-          );
+          if (!registered.api_token) throw new Error("Estação já provisionada. Reconecte-se ou solicite manutenção.");
 
           await BLEService.saveIdentity(
-              registered.device_id
+              registered.device_id, registered.api_token
           );
       }
       catch(error)

@@ -1,41 +1,36 @@
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
+import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
+import { AccountProvider, useAccount } from "../src/accounts";
 
-import { useColorScheme } from "./_hooks/use-color-scheme";
-
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
+function Routes() {
+  const { session } = useAccount();
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack>
-          <Stack.Screen
-            name="index"
-            options={{ headerShown: false }}
-          />
-
-          <Stack.Screen
-            name="config"
-            options={{ headerShown: false }}
-          />
-
-          <Stack.Screen
-            name="station"
-            options={{ headerShown: false }}
-          />
-
-          <Stack.Screen
-            name="wifi"
-            options={{ headerShown: false }}
-          />        
+    <ThemeProvider value={DefaultTheme}>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Protected guard={!session}>
+          <Stack.Screen name="login" />
+        </Stack.Protected>
+        <Stack.Protected guard={!!session}>
+          <Stack.Screen name="index" />
+        </Stack.Protected>
+        <Stack.Protected
+          guard={session?.user.role === "admin" && !session.mfa_setup_required}
+        >
+          <Stack.Screen name="config" />
+          <Stack.Screen name="station" />
+          <Stack.Screen name="wifi" />
+        </Stack.Protected>
       </Stack>
       <StatusBar style="dark" backgroundColor="#ffffff" translucent={false} />
     </ThemeProvider>
+  );
+}
+export default function RootLayout() {
+  return (
+    <AccountProvider>
+      <Routes />
+    </AccountProvider>
   );
 }

@@ -27,9 +27,9 @@ import {
     useState,
 } from "react";
 
-import { API_CONFIG } from "./config/api";
-import BLEService from "./services/ble";
-import { BLEMessage } from "./services/ble-types";
+import { API_CONFIG } from "../src/config/api";
+import BLEService from "../src/services/ble";
+import { BLEMessage } from "../src/services/ble-types";
 
 
 export default function WifiConfig() {
@@ -266,7 +266,7 @@ export default function WifiConfig() {
     );
 
 
-    BLEService.getStatus();
+    void BLEService.getStatus().catch(e => { setMessageType("error"); setMessage(e instanceof Error ? e.message : "Não foi possível consultar a estação."); });
 
 
     return () => {

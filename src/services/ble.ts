@@ -1,3 +1,4 @@
+import { requireAdmin } from "../account-api";
 import { PermissionsAndroid, Platform } from "react-native";
 
 import {
@@ -291,13 +292,11 @@ class BLEService {
 
   async send(message: string) {
 
-    console.log(
-      "Sending message:",
-      message
-    );
+    // Login protects the official app. Firmware-side BLE authorization is a separate change.
+    await requireAdmin();
 
     if (!this.connectedDevice) {
-      return;
+      throw new Error("A estação não está conectada por Bluetooth.");
     }
 
     const encoded =

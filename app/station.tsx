@@ -23,9 +23,9 @@ import {
     useState,
 } from "react";
 
-import BLEService from "./services/ble";
-import { BLEMessage } from "./services/ble-types";
-import { registerDevice } from "./services/device-api";
+import BLEService from "../src/services/ble";
+import { BLEMessage } from "../src/services/ble-types";
+import { registerDevice, confirmProvisioning } from "../src/services/device-api";
 
 
 export default function Station() {
@@ -117,6 +117,9 @@ export default function Station() {
                         ) {
                             setConfiguring(false);
                             setConfigured(true);
+                            if (data.deviceId) void confirmProvisioning(data.deviceId).catch(() => {
+                                setMessage("Identidade salva. A confirmação será concluída quando a estação enviar dados.");
+                            });
 
                             setPendingToken(null);
                             setPendingDeviceId(null);
@@ -149,7 +152,7 @@ export default function Station() {
         );
 
 
-        BLEService.getStatus();
+        void BLEService.getStatus().catch(e => setMessage(e instanceof Error ? e.message : "Não foi possível consultar a estação."));
 
         /*
          * IMPORTANTE:
@@ -164,7 +167,7 @@ export default function Station() {
             );
         };
 
-    }, []);
+    }, [moduleName, router]);
 
 
     async function configureStation() {
@@ -215,7 +218,7 @@ export default function Station() {
 
                 if (!registered.api_token) {
                     throw new Error(
-                        "Servidor não forneceu a credencial da estação."
+                        "Esta estação já possui credencial. Reconecte-se para conferir a configuração ou solicite manutenção à equipe."
                     );
                 }
 
