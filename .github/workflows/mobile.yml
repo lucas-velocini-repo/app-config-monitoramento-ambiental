@@ -1,0 +1,21 @@
+name: Mobile account and BLE checks
+on:
+  pull_request:
+  push:
+    branches: [id-hardware, feature/user-accounts]
+permissions:
+  contents: read
+jobs:
+  mobile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npx tsc --noEmit
+      - run: npm run lint
+      - run: npx expo export --platform android --output-dir /tmp/casa-android-export

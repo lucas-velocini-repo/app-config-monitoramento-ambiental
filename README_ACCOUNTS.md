@@ -47,3 +47,26 @@ O comando solicita a autenticação EAS do projeto. Ele não foi executado como 
 7. Teste retorno do app após ficar em segundo plano e comportamento sem conexão com a API. Nesta versão, configurar uma estação pelo app oficial exige conexão com o servidor para validar a permissão.
 
 As verificações TypeScript, lint e exportação do bundle não substituem o teste do APK instalado, do BLE e do armazenamento nativo em um telefone.
+
+## Visual, Bluetooth e intervalo remoto
+
+As telas usam a mesma logo T2P e paleta da interface web, com layout compartilhado
+adaptado à área segura e ao teclado. O campo de segundo fator aparece ao tocar em
+**Sou administrador**. A política de senha é de 8 a 128 caracteres no servidor.
+
+Administradores podem abrir **Estações cadastradas · Rede → Alterar intervalo pela
+rede**, sem conexão BLE. Valores inteiros entre 30 e 86400 segundos são enviados à
+API; o firmware 1.2.0 consulta a cada minuto e confirma depois de salvar em NVS. O
+aplicativo distingue intervalo solicitado e confirmado e atualiza a lista a cada
+30 segundos enquanto a tela inicial está aberta. O servidor deve ser atualizado
+antes de usar esse recurso; o firmware precisa de uma gravação inicial por USB.
+
+O scan mostra o identificador Bluetooth de cada unidade e atualiza nomes recebidos
+posteriormente. A conexão é cancelada ao sair do fluxo de estação, inclusive pelo
+voltar do Android, antes de iniciar outro scan. Navegar de cadastro para Wi-Fi
+preserva a conexão. Falhas de descoberta ou cancelamento durante a conexão também
+liberam a conexão nativa. Testes simulados: `npm test`; repetir fisicamente com duas
+estações, retorno nativo, botão do app, queda de conexão e entrada/saída da conta.
+
+O guia incremental completo está no repositório CASA:
+https://github.com/lucas-velocini-repo/CASA/blob/feature/user-accounts/docs/intervalos-e-ajustes-do-app.md

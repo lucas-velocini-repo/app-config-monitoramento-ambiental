@@ -1,241 +1,243 @@
 import { useFocusEffect, useRouter } from "expo-router";
-import { AlertCircle, Bluetooth } from "lucide-react-native";
-import { useCallback, useState } from "react";
-import {
-  FlatList,
-  Linking,
-  Image,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Bluetooth, Radio } from "lucide-react-native";
+import { useCallback, useRef, useState } from "react";
+import { Linking, Text, TouchableOpacity, View } from "react-native";
 import { useAccount } from "../src/accounts";
 import { accountRequest, requireAdmin } from "../src/account-api";
 import { API_CONFIG } from "../src/config/api";
-import BLEService from "../src/services/ble";
+import BLEService, { DiscoveredStation } from "../src/services/ble";
+import { Screen, ui } from "../src/components/Screen";
+import { IntervalControl } from "../src/components/IntervalControl";
+import {
+  listConfigurations,
+  StationConfiguration,
+} from "../src/services/station-config";
+import { colors } from "../src/theme";
 
+type Station = { id: number; device_id: string; name: string; active: boolean };
 export default function Home() {
   const router = useRouter();
   const { session, logout } = useAccount();
   const isAdmin = session?.user.role === "admin";
   const [error, setError] = useState("");
-  const [myStations, setMyStations] = useState<
-    { device_id: string; name: string }[]
-  >([]);
-  const [devices, setDevices] = useState<{ id: string; name: string }[]>([]);
-
+  const [stations, setStations] = useState<Station[]>([]);
+  const [configs, setConfigs] = useState<StationConfiguration[]>([]);
+  const [devices, setDevices] = useState<DiscoveredStation[]>([]);
+  const [editingInterval, setEditingInterval] = useState<number | null>(null);
+  const [connecting, setConnecting] = useState<string | null>(null);
+  const connectingRef = useRef(false);
+  const focused = useRef(false);
+  const [scanRevision, setScanRevision] = useState(0);
+  const refresh = useCallback(async () => {
+    const [rows, configRows] = await Promise.all([
+      accountRequest<Station[]>("/devices"),
+      isAdmin ? listConfigurations() : Promise.resolve([]),
+    ]);
+    if (focused.current) {
+      setStations(rows);
+      setConfigs(configRows);
+    }
+  }, [isAdmin]);
   useFocusEffect(
     useCallback(() => {
-      if (!isAdmin) {
-        let live = true;
-        accountRequest<{ device_id: string; name: string }[]>("/devices")
-          .then((rows) => {
-            if (live) setMyStations(rows);
-          })
-          .catch((e) => {
-            if (live) setError(e.message);
-          });
-        return () => {
-          live = false;
-        };
-      }
+      focused.current = true;
       let alive = true;
-      async function initializeBLE() {
+      setError("");
+      setDevices([]);
+      setConnecting(null);
+      connectingRef.current = false;
+      async function initialize() {
         try {
-          await requireAdmin();
+          // Native back, gestures and programmatic navigation all return through here.
+          await BLEService.disconnect();
           if (!alive) return;
-
-          const ok = await BLEService.requestPermissions();
-
-          if (!ok) {
-            return;
-          }
-
-          await BLEService.startScan((device) => {
-            setDevices((old) => {
-              const exists = old.find((d) => d.id === device.id);
-
-              if (exists) {
-                return old;
-              }
-
-              return [...old, device];
-            });
-          });
+          await refresh();
+          if (!isAdmin || !alive) return;
+          await requireAdmin();
+          if (!alive || !(await BLEService.requestPermissions())) return;
+          if (!alive) return;
+          await BLEService.startScan(
+            (device) => {
+              if (alive)
+                setDevices((old) => {
+                  const previous = old.find((d) => d.id === device.id);
+                  if (previous?.name === device.name) return old;
+                  return previous
+                    ? old.map((d) => (d.id === device.id ? device : d))
+                    : [...old, device];
+                });
+            },
+            (e) => {
+              if (alive) setError(e.message);
+            },
+          );
         } catch (e) {
           if (alive)
             setError(
               e instanceof Error
                 ? e.message
-                : "Não foi possível procurar estações.",
+                : "Não foi possível carregar o CASA.",
             );
         }
       }
-
-      setDevices([]);
-      initializeBLE();
-
+      void initialize();
+      const timer = setInterval(() => {
+        void refresh().catch(() => {});
+      }, 30000);
       return () => {
         alive = false;
+        focused.current = false;
+        clearInterval(timer);
         BLEService.stopScan();
       };
-    }, [isAdmin]),
+      // The counter intentionally restarts scanning after a retry or a connection failure.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isAdmin, refresh, scanRevision]),
   );
-
-  async function handleSelectDevice(device: { id: string; name: string }) {
+  async function select(device: DiscoveredStation) {
+    if (connectingRef.current) return;
+    connectingRef.current = true;
+    setConnecting(device.id);
+    setError("");
     try {
       await requireAdmin();
-      BLEService.stopScan();
+      if (!focused.current) return;
       await BLEService.connect(device.id);
-
+      if (!focused.current) {
+        await BLEService.disconnect();
+        return;
+      }
       router.push({
         pathname: "/station",
-        params: {
-          id: device.id,
-          name: device.name,
-        },
+        params: { id: device.id, name: device.name },
       });
-    } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Não foi possível conectar.",
-      );
+    } catch (e) {
+      if (focused.current) {
+        setError(e instanceof Error ? e.message : "Não foi possível conectar.");
+        setScanRevision((v) => v + 1);
+      }
+    } finally {
+      connectingRef.current = false;
+      setConnecting(null);
     }
   }
-
   return (
-    <View style={styles.container}>
-      <Image
-        source={require("../assets/images/logo-2-transp.png")}
-        style={styles.logo}
-        resizeMode="contain"
-      />
-      <Text style={styles.title}>Olá, {session?.user.name}!</Text>
+    <Screen
+      title={`Olá, ${session?.user.name}!`}
+      description={
+        isAdmin
+          ? "Gerencie suas estações e configure módulos próximos."
+          : "Acompanhe as estações vinculadas à sua conta."
+      }
+    >
       <TouchableOpacity
         onPress={() => {
           void logout().catch((e) => setError(e.message));
         }}
       >
-        <Text style={{ color: "#075db5", paddingVertical: 12 }}>
-          Sair da conta
-        </Text>
+        <Text style={ui.link}>Sair da conta</Text>
       </TouchableOpacity>
-      {error ? (
-        <Text
-          accessibilityRole="alert"
-          style={{ color: "#a32720", marginBottom: 12 }}
-        >
+      {!!error && (
+        <Text accessibilityRole="alert" style={ui.error}>
           {error}
         </Text>
-      ) : null}
-      <Text style={styles.subtitle}>
-        {isAdmin
-          ? "Conecte-se a um módulo disponível:"
-          : "Consulte as estações vinculadas à sua conta pelo site do CASA."}
-      </Text>
-      {!isAdmin && (
+      )}
+      {isAdmin && (
+        <View style={ui.section}>
+          <Text style={ui.label}>Estações próximas · Bluetooth</Text>
+          <Text style={ui.description}>
+            O identificador abaixo do nome diferencia os módulos.
+          </Text>
+          {devices.map((device) => (
+            <TouchableOpacity
+              key={device.id}
+              disabled={connecting !== null}
+              style={ui.secondary}
+              onPress={() => {
+                void select(device);
+              }}
+            >
+              <View
+                style={{ flexDirection: "row", gap: 10, alignItems: "center" }}
+              >
+                <Bluetooth color={colors.primary} size={22} />
+                <Text style={ui.label}>
+                  {connecting === device.id ? "Conectando…" : device.name}
+                </Text>
+              </View>
+              <Text style={ui.description}>{device.id}</Text>
+            </TouchableOpacity>
+          ))}
+          {!devices.length && (
+            <Text style={ui.description}>
+              Procurando estações. Confira a alimentação, o Bluetooth e as
+              permissões do celular.
+            </Text>
+          )}
+          <TouchableOpacity
+            disabled={!!connecting}
+            onPress={() => setScanRevision((v) => v + 1)}
+          >
+            <Text style={ui.link}>Buscar novamente</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      <View style={ui.section}>
+        <Text style={ui.label}>
+          {isAdmin ? "Estações cadastradas · Rede" : "Minhas estações"}
+        </Text>
         <TouchableOpacity
-          style={styles.card}
           onPress={() => {
             void Linking.openURL(
               API_CONFIG.baseUrl.replace(/\/api\/?$/, ""),
             ).catch(() => setError("Não foi possível abrir o site."));
           }}
         >
-          <Text style={styles.cardText}>Abrir minhas estações no site</Text>
+          <Text style={ui.link}>Abrir gráficos e histórico no site</Text>
         </TouchableOpacity>
-      )}
-
-      {!isAdmin ? (
-        <FlatList
-          data={myStations}
-          keyExtractor={(item) => item.device_id}
-          ListEmptyComponent={
-            <Text style={styles.emptyText}>Nenhuma estação vinculada.</Text>
-          }
-          renderItem={({ item }) => (
+        {stations.map((station) => (
+          <View key={station.id} style={ui.secondary}>
             <View
-              style={[
-                styles.card,
-                {
-                  backgroundColor: "white",
-                  borderWidth: 1,
-                  borderColor: "#dce7f0",
-                },
-              ]}
+              style={{ flexDirection: "row", gap: 10, alignItems: "center" }}
             >
-              <Text style={{ color: "#17324b", fontWeight: "600" }}>
-                {item.name} · {item.device_id}
-              </Text>
+              <Radio color={colors.accent} size={20} />
+              <Text style={[ui.label, { flex: 1 }]}>{station.name}</Text>
             </View>
-          )}
-        />
-      ) : devices.length > 0 ? (
-        <FlatList
-          data={devices}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.card}
-              onPress={() => handleSelectDevice(item)}
-            >
-              <Bluetooth color="#ffffff" size={24} />
-              <Text style={styles.cardText}>{item.name}</Text>
-            </TouchableOpacity>
-          )}
-        />
-      ) : (
-        <View style={styles.emptyState}>
-          <AlertCircle color="#ef4444" size={48} />
-          <Text style={styles.emptyText}>Nenhum módulo encontrado.</Text>
-          <Text style={styles.checklist}>
-            • Verifique se o módulo está na tomada.{"\n"}• Verifique se o
-            Bluetooth está ativado.
+            <Text style={ui.description}>{station.device_id}</Text>
+            {isAdmin && (
+              <>
+                <TouchableOpacity
+                  onPress={() =>
+                    setEditingInterval(
+                      editingInterval === station.id ? null : station.id,
+                    )
+                  }
+                >
+                  <Text style={ui.link}>
+                    {editingInterval === station.id
+                      ? "Ocultar intervalo"
+                      : "Alterar intervalo pela rede"}
+                  </Text>
+                </TouchableOpacity>
+                {editingInterval === station.id && (
+                  <IntervalControl
+                    deviceId={station.id}
+                    config={configs.find((c) => c.device_id === station.id)}
+                    onChange={() => {
+                      void refresh().catch((e) => setError(e.message));
+                    }}
+                  />
+                )}
+              </>
+            )}
+          </View>
+        ))}
+        {!stations.length && (
+          <Text style={ui.description}>
+            Nenhuma estação disponível para esta conta.
           </Text>
-        </View>
-      )}
-    </View>
+        )}
+      </View>
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    paddingTop: 50,
-    backgroundColor: "#f8fafc",
-  },
-  logo: {
-    width: 40,
-    height: 40,
-    position: "absolute",
-    top: 55,
-    right: 20,
-  },
-  title: { fontSize: 32, fontWeight: "bold", color: "#0056b3" },
-  subtitle: { fontSize: 16, color: "#64748b", marginBottom: 20 },
-  card: {
-    backgroundColor: "#0057b3de",
-    height: 70,
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    elevation: 0,
-  },
-  cardText: {
-    marginLeft: 15,
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#ffffff",
-  },
-  emptyState: { alignItems: "center", marginTop: 50 },
-  emptyText: { fontSize: 18, fontWeight: "600", marginTop: 10 },
-  checklist: {
-    marginTop: 15,
-    color: "#64748b",
-    lineHeight: 22,
-    textAlign: "center",
-  },
-});

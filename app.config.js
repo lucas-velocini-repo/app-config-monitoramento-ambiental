@@ -1,11 +1,8 @@
-const isDevelopment =
-  process.env.APP_VARIANT === "development";
+const isDevelopment = process.env.APP_VARIANT === "development";
 
 export default {
   expo: {
-    name: isDevelopment
-      ? "CASAS DEV"
-      : "CASAS",
+    name: isDevelopment ? "CASA DEV" : "CASA",
 
     slug: "app-config-it",
 
@@ -17,7 +14,7 @@ export default {
 
     scheme: "meuappmobile",
 
-    userInterfaceStyle: "automatic",
+    userInterfaceStyle: "light",
 
     newArchEnabled: true,
 
@@ -28,12 +25,9 @@ export default {
     android: {
       adaptiveIcon: {
         backgroundColor: "#E6F4FE",
-        foregroundImage:
-          "./assets/images/logo-7.png",
-        backgroundImage:
-          "./assets/images/logo-7.png",
-        monochromeImage:
-          "./assets/images/logo-7.png",
+        foregroundImage: "./assets/images/logo-7.png",
+        backgroundImage: "./assets/images/logo-7.png",
+        monochromeImage: "./assets/images/logo-7.png",
       },
 
       edgeToEdgeEnabled: true,
@@ -65,14 +59,13 @@ export default {
       [
         "expo-splash-screen",
         {
-          image:
-            "./assets/images/logo-7.png",
-          imageWidth: 200,
+          image: "./assets/images/t2p-logo.png",
+          imageWidth: 220,
           resizeMode: "contain",
           backgroundColor: "#ffffff",
 
           dark: {
-            backgroundColor: "#000000",
+            backgroundColor: "#f3f7fb",
           },
         },
       ],
@@ -82,10 +75,7 @@ export default {
         {
           isBackgroundEnabled: true,
 
-          modes: [
-            "peripheral",
-            "central",
-          ],
+          modes: ["peripheral", "central"],
 
           bluetoothPermission:
             "Permitir que $(PRODUCT_NAME) acesse o bluetooth.",
@@ -102,8 +92,7 @@ export default {
       router: {},
 
       eas: {
-        projectId:
-          "0acc96b7-149f-48fa-bf21-fe32dfda841c",
+        projectId: "0acc96b7-149f-48fa-bf21-fe32dfda841c",
       },
     },
   },
