@@ -1,5 +1,7 @@
 # Aplicativo de Configuração — CASA
 
+> A versão com contas exige backend atualizado, login e um novo APK. Consulte [Contas no aplicativo](README_ACCOUNTS.md) antes de compilar ou implantar.
+
 Aplicativo móvel do projeto **CASA — Central de Acompanhamento de Saúde e Ambiente**, desenvolvido em **React Native com Expo**.
 
 O aplicativo é responsável pela configuração das estações ambientais baseadas em ESP32, utilizando **Bluetooth Low Energy (BLE)** para comunicação local com o dispositivo.

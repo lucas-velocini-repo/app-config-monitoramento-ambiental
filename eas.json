@@ -3,38 +3,31 @@
     "version": ">= 21.0.2",
     "appVersionSource": "remote"
   },
-
   "build": {
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-
       "env": {
         "APP_VARIANT": "development"
       }
     },
-
     "preview": {
       "distribution": "internal",
-
       "android": {
         "buildType": "apk"
       },
-
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "http://192.168.15.2:8000"
+        "EXPO_PUBLIC_API_BASE_URL": "https://t2phealth.com.br/api"
       }
     },
-
     "production": {
       "autoIncrement": true,
-
       "env": {
-        "APP_VARIANT": "production"
+        "APP_VARIANT": "production",
+        "EXPO_PUBLIC_API_BASE_URL": "https://t2phealth.com.br/api"
       }
     }
   },
-
   "submit": {
     "production": {}
   }
