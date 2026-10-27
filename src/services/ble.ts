@@ -82,36 +82,41 @@ class BLEService {
     if (generation !== this.scanGeneration) return;
     this.scanning = true;
     const names = new Map<string, { name: string; quality: number }>();
-    await this.manager.startDeviceScan(
-      [BLE_UUID.SERVICE],
-      { allowDuplicates: true },
-      (error, device) => {
-        if (generation !== this.scanGeneration) return;
-        if (error) {
-          this.stopScan();
-          onError?.(
-            new Error(
-              "Não foi possível buscar estações. Confira o Bluetooth e as permissões.",
-            ),
-          );
-          return;
-        }
-        if (device) {
-          const quality = device.localName?.trim()
-            ? 2
-            : device.name?.trim()
-              ? 1
-              : 0;
-          const previous = names.get(device.id);
-          const current =
-            previous && previous.quality > quality
-              ? previous
-              : { name: stationDisplayName(device), quality };
-          names.set(device.id, current);
-          onDeviceFound({ id: device.id, name: current.name });
-        }
-      },
-    );
+    try {
+      await this.manager.startDeviceScan(
+        [BLE_UUID.SERVICE],
+        { allowDuplicates: true },
+        (error, device) => {
+          if (generation !== this.scanGeneration) return;
+          if (error) {
+            this.stopScan();
+            onError?.(
+              new Error(
+                "Não foi possível buscar estações. Confira o Bluetooth e as permissões.",
+              ),
+            );
+            return;
+          }
+          if (device) {
+            const quality = device.localName?.trim()
+              ? 2
+              : device.name?.trim()
+                ? 1
+                : 0;
+            const previous = names.get(device.id);
+            const current =
+              previous && previous.quality > quality
+                ? previous
+                : { name: stationDisplayName(device), quality };
+            names.set(device.id, current);
+            onDeviceFound({ id: device.id, name: current.name });
+          }
+        },
+      );
+    } catch (error) {
+      this.scanning = false;
+      throw error;
+    }
   }
   stopScan() {
     ++this.scanGeneration; // Also cancels a scan waiting for Bluetooth to turn on.

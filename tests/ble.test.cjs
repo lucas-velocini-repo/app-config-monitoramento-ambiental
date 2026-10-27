@@ -8,6 +8,7 @@ function setup() {
   let state = "PoweredOn";
   let scanCallback, disconnectedCallback;
   let discoveryError = false;
+  let scanFails = false;
   let connectResolve;
   let delayed = false;
   let stateCallback;
@@ -44,6 +45,7 @@ function setup() {
       return { remove() {} };
     },
     startDeviceScan(_filter, _options, cb) {
+      if (scanFails) return Promise.reject(new Error("scan unavailable"));
       scanCallback = cb;
     },
     stopDeviceScan() {},
@@ -96,6 +98,9 @@ function setup() {
     name: exports.stationDisplayName,
     cancelled,
     advertise: (d) => scanCallback(null, d),
+    setScanFailure: (value) => {
+      scanFails = value;
+    },
     failDiscovery: () => {
       discoveryError = true;
     },
@@ -164,4 +169,18 @@ test("leaving while Bluetooth is off does not start a late scan", async () => {
   s.service.stopScan();
   s.powerOn();
   await scanning;
+});
+
+test("a rejected native scan can be retried without restarting the app", async () => {
+  const s = setup();
+  s.setScanFailure(true);
+  await assert.rejects(
+    s.service.startScan(() => {}),
+    /scan unavailable/,
+  );
+  s.setScanFailure(false);
+  const found = [];
+  await s.service.startScan((d) => found.push(d));
+  s.advertise({ id: "station-1", name: "CASA" });
+  assert.equal(found.length, 1);
 });
